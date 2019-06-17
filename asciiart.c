@@ -5,9 +5,33 @@
 
 #define PNG_SIGNATURE_SIZE 8
 
-//void gray_to_art(int y, int x, unsigned char pixels[][x]){
-//	printf("some bullshit\n");
-//}
+void gray_to_art(int y, int x, unsigned char **pixels){
+	for(int row = 0; row < y; row++){
+		for(int col = 0; col < x; col++){
+			if(pixels[row][col] >= 0 && pixels[row][col] < 25)
+				putchar(' ');
+			else if(pixels[row][col] >= 25 && pixels[row][col] < 50)
+				putchar('.');
+			else if(pixels[row][col] >= 50 && pixels[row][col] < 75)
+				putchar(':');
+			else if(pixels[row][col] >= 75 && pixels[row][col] < 100)
+				putchar('-');
+			else if(pixels[row][col] >= 100 && pixels[row][col] < 125)
+				putchar('=');
+			else if(pixels[row][col] >= 125 && pixels[row][col] < 150)
+				putchar('+');
+			else if(pixels[row][col] >= 150 && pixels[row][col] < 175)
+				putchar('*');
+			else if(pixels[row][col] >= 175 && pixels[row][col] < 200)
+				putchar('#');
+			else if(pixels[row][col] >= 200 && pixels[row][col] < 225)
+				putchar('%');
+			else if(pixels[row][col] >= 225 && pixels[row][col] < 255)
+				putchar('@');
+		}
+		putchar('\n');
+	}
+}
 
 void process_png(char *file_name){
 	FILE *fp = fopen(file_name, "rb");
@@ -80,7 +104,7 @@ void process_png(char *file_name){
 	png_read_image(png_ptr, row_pointers);
 
 	/* generate art */
-	//gray_to_art(width, height, row_pointers);
+	gray_to_art(width, height, row_pointers);
 
 	for(int y = 0; y < height; y++)
 		free(row_pointers[y]);
