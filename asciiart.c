@@ -26,7 +26,7 @@ void gray_to_art(int y, int x, unsigned char **pixels){
 				putchar('#');
 			else if(pixels[row][col] >= 200 && pixels[row][col] < 225)
 				putchar('%');
-			else if(pixels[row][col] >= 225 && pixels[row][col] < 255)
+			else
 				putchar('@');
 		}
 		putchar('\n');
