@@ -85,12 +85,18 @@ void process_png(char *file_name){
 	png_byte color_type = png_get_color_type(png_ptr, info_ptr);
 	png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
+	/* can only handle 8 bit channels */
+	if(bit_depth == 16)
+		png_set_strip_16(png_ptr);
 	/* convert image to grayscale if not already */
 	if(color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_RGB_ALPHA)
-		png_set_rgb_to_gray_fixed(png_ptr, 1, -1, -1);
+		png_set_rgb_to_gray(png_ptr, 1, -1, -1);
 	/* ensure grayscale images are 8 bits */
 	if(color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
 		png_set_expand_gray_1_2_4_to_8(png_ptr);
+	/* no need for alpha channel */
+	if(color_type & PNG_COLOR_MASK_ALPHA)
+		png_set_strip_alpha(png_ptr);
 
 	png_set_interlace_handling(png_ptr);
 	png_read_update_info(png_ptr, info_ptr);
