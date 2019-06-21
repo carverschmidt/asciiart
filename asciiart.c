@@ -1,31 +1,49 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include <png.h>
 #include <jpeglib.h>
 
 #define PNG_SIGNATURE_SIZE 8
 
+static unsigned int max_width = 0;
+
 void gray_to_art(int y, int x, unsigned char **pixels){
-	for(int row = 0; row < y; row++){
-		for(int col = 0; col < x; col++){
-			if(pixels[row][col] >= 0 && pixels[row][col] < 25)
+	int increment = 1;
+	if(max_width != 0 && (int) max_width < x)
+		increment = (int) ceil((float) x / max_width);	
+
+	for(int row = 0; row < y; row+= 2 * increment){
+		for(int col = 0; col < x; col+=increment){
+			/* average the pixel block */
+			int average = 0;
+			int pixels_in_block = 0; // all blocks not guaranteed to be homogeneous
+			for(int j = row; j < row + 2 * increment && j < y; j++){
+				for(int k = col; k < col + increment && k < x; k++){
+					average += pixels[j][k];
+					pixels_in_block++;
+				}
+			}
+			average /= pixels_in_block;
+
+			if(average >= 0 && average < 25)
 				putchar(' ');
-			else if(pixels[row][col] >= 25 && pixels[row][col] < 50)
+			else if(average >= 25 && average < 50)
 				putchar('.');
-			else if(pixels[row][col] >= 50 && pixels[row][col] < 75)
+			else if(average >= 50 && average < 75)
 				putchar(':');
-			else if(pixels[row][col] >= 75 && pixels[row][col] < 100)
+			else if(average >= 75 && average < 100)
 				putchar('-');
-			else if(pixels[row][col] >= 100 && pixels[row][col] < 125)
+			else if(average >= 100 && average < 125)
 				putchar('=');
-			else if(pixels[row][col] >= 125 && pixels[row][col] < 150)
+			else if(average >= 125 && average < 150)
 				putchar('+');
-			else if(pixels[row][col] >= 150 && pixels[row][col] < 175)
+			else if(average >= 150 && average < 175)
 				putchar('*');
-			else if(pixels[row][col] >= 175 && pixels[row][col] < 200)
+			else if(average >= 175 && average < 200)
 				putchar('#');
-			else if(pixels[row][col] >= 200 && pixels[row][col] < 225)
+			else if(average >= 200 && average < 225)
 				putchar('%');
 			else
 				putchar('@');
@@ -172,7 +190,7 @@ void process_jpeg(char *file_name){
 }
 
 int main(int argc, char **argv){
-	if(argc == 2){
+	if(argc == 2 || argc == 3){
 		/* file extension must be present */
 		char *ext = strrchr(argv[1], '.');
 		if(!ext){
@@ -181,15 +199,19 @@ int main(int argc, char **argv){
 		} 
 		/* process filetype if supported */
 		if(strcasecmp(".png", ext) == 0){
+			if(argc == 3)
+				max_width = strtol(argv[2], NULL, 10);
 			process_png(argv[1]);
 		} else if(strcasecmp(".jpg", ext) == 0 || strcasecmp(".jpeg", ext) == 0){
+			if(argc == 3)
+				max_width = strtol(argv[2], NULL, 10);
 			process_jpeg(argv[1]);
 		} else {
 			fprintf(stderr, "error: filetype \"%s\" is not supported\n", ext);
 			return 1;
 		}
 	} else {
-		fprintf(stderr, "usage: asciiart image\n");
+		fprintf(stderr, "usage: asciiart image [max_width]\n");
 		return 1;
 	}
 	return 0;
