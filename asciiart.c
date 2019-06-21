@@ -140,7 +140,7 @@ void process_jpeg(char *file_name){
 	/* read file parameters */
 	jpeg_read_header(&cinfo, TRUE);
 
-	/* insure output is grayscale */
+	/* ensure output is grayscale */
 	if(cinfo.jpeg_color_space != JCS_GRAYSCALE)
 		cinfo.out_color_space = JCS_GRAYSCALE;
 
@@ -154,14 +154,13 @@ void process_jpeg(char *file_name){
 		exit(1);
 	}
 
-	/* read the image in one pass */
+	/* allocate pixel array */
 	JSAMPARRAY row_pointers = (*cinfo.mem->alloc_sarray)((j_common_ptr) &cinfo,
 		   JPOOL_IMAGE, cinfo.output_width, cinfo.output_height);	
 
-	int i = 0;
+	/* read row by row */
 	while(cinfo.output_scanline < cinfo.output_height){
-		jpeg_read_scanlines(&cinfo, &row_pointers[i], 1);
-		i++;
+		jpeg_read_scanlines(&cinfo, &row_pointers[cinfo.output_scanline], 1);
 	}
 	jpeg_finish_decompress(&cinfo);
 
@@ -169,7 +168,6 @@ void process_jpeg(char *file_name){
 	gray_to_art(cinfo.output_height, cinfo.output_width, row_pointers);
 
 	jpeg_destroy_decompress(&cinfo);
-	//free(row_pointers);
 	fclose(fp);
 }
 
