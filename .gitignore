@@ -2,5 +2,7 @@
 asciiart
 .DS_Store
 *.png
+*.jpg
+*.jpeg
 example.txt
 test.txt
