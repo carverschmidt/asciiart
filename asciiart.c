@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <png.h>
+#include <jpeglib.h>
 
 #define PNG_SIGNATURE_SIZE 8
 
@@ -119,6 +120,58 @@ void process_png(char *file_name){
 	fclose(fp);
 }
 
+void process_jpeg(char *file_name){
+	FILE *fp;
+	struct jpeg_decompress_struct cinfo;
+	struct jpeg_error_mgr error;
+
+	if((fp = fopen(file_name, "rb")) == NULL){
+		perror("error opening image");
+		exit(1);
+	}
+
+	/* init error handling */
+	cinfo.err = jpeg_std_error(&error);
+
+	/* init JPEG decompression struct */	
+	jpeg_create_decompress(&cinfo);
+	/* specify data source */
+	jpeg_stdio_src(&cinfo, fp);
+	/* read file parameters */
+	jpeg_read_header(&cinfo, TRUE);
+
+	/* insure output is grayscale */
+	if(cinfo.jpeg_color_space != JCS_GRAYSCALE)
+		cinfo.out_color_space = JCS_GRAYSCALE;
+
+	jpeg_start_decompress(&cinfo);
+
+	/* there can only be one color component for ascii conversion */
+	if(cinfo.out_color_components != 1){
+		fprintf(stderr, "error: there was a problem converting the JPEG to grayscale");
+		jpeg_destroy_decompress(&cinfo);
+		fclose(fp);
+		exit(1);
+	}
+
+	/* read the image in one pass */
+	JSAMPARRAY row_pointers = (*cinfo.mem->alloc_sarray)((j_common_ptr) &cinfo,
+		   JPOOL_IMAGE, cinfo.output_width, cinfo.output_height);	
+
+	int i = 0;
+	while(cinfo.output_scanline < cinfo.output_height){
+		jpeg_read_scanlines(&cinfo, &row_pointers[i], 1);
+		i++;
+	}
+	jpeg_finish_decompress(&cinfo);
+
+	/* generate art */
+	gray_to_art(cinfo.output_height, cinfo.output_width, row_pointers);
+
+	jpeg_destroy_decompress(&cinfo);
+	//free(row_pointers);
+	fclose(fp);
+}
 
 int main(int argc, char **argv){
 	if(argc == 2){
@@ -129,8 +182,10 @@ int main(int argc, char **argv){
 			return 1;
 		} 
 		/* process filetype if supported */
-		if(strcmp(".png", ext) == 0){
+		if(strcasecmp(".png", ext) == 0){
 			process_png(argv[1]);
+		} else if(strcasecmp(".jpg", ext) == 0 || strcasecmp(".jpeg", ext) == 0){
+			process_jpeg(argv[1]);
 		} else {
 			fprintf(stderr, "error: filetype \"%s\" is not supported\n", ext);
 			return 1;
